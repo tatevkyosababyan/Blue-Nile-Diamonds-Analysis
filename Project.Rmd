@@ -1,0 +1,725 @@
+---
+title: "Blue Nile Diamonds Analysis"
+author: "Group 8: Caroline Bush, Humaira Halim, Leah Hogenmiller, Tatev Kyosababyan"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+### STAT6021 - Linear Models for Data Science
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(RColorBrewer)
+library(gridExtra)
+library(MASS)
+library(patchwork)
+```
+
+```{r, include=FALSE}
+diamonds <- read.csv("diamonds4.csv")
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Factoring cut and clarity so that they are in order from highest quality to lowest quality 
+diamonds$cut <- factor(diamonds$cut, levels=c('Astor Ideal', 'Ideal', 'Very Good', 'Good'))
+diamonds$clarity <- factor(diamonds$clarity, levels=c('FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'))
+```
+
+<br />
+
+### Section 1
+
+    The diamond is a staple gemstone in jewelry and other luxury items
+such that there exists a multitude of prospective buyers, each with a
+particular budget. In particular, it is a rite of passage within the
+wedding scene to pick the perfect diamond for one's wedding band.
+Guiding these buyers through the tradeoffs that allow them to purchase a
+high-quality diamond while adhering to their budget requires
+comprehensive knowledge of how the characteristics of a diamond
+influence its price. In particular, this report describes how the
+diamond's carat, cut, color, and clarity each affect price based on the
+diamonds that are part of Blue Nile's inventory.<br />     A diamond's
+carat, also known as its weight, is one consideration for the
+prospective buyer and an important indicator of a diamond's price. Large
+diamonds are rarer than smaller diamonds such that most diamonds on the
+market are less than two carats. Due to the scarcity of high-carat
+diamonds, these gemstones become increasingly more expensive with size:
+for every 1% increase in diamond carat, the price increases by 2%. Carat
+alone does not dictate a diamond's price, however: cut, color, and
+clarity also contribute to a diamond's overall quality. Smaller carat
+diamonds are more likely to have high-quality cut, color, and clarity
+than larger gemstones. Thus, it is imperative to understand how these
+characteristics interact with carat to determine a diamond's total
+price.<br />     The cut of a diamond refers to how well-proportioned
+the dimensions of the gemstone are, as these properties determine how
+light moves and generate the characteristic sparkle that makes diamonds
+so attractive. Diamonds with higher cut grades appear more brilliant and
+are thought to be priced higher than diamonds of a lower cut grade.
+Indeed, these diamonds can reach incredibly lofty prices for their
+carat. Opting for a lower cut grade may reduce the price of a diamond,
+but that largely depends upon the gemstone's other characteristics. When
+considering cut alone, there are diamonds of more modest cut grades with
+prices that exceed those of higher-quality cuts. Nevertheless,
+prospective buyers working within a budget are often encouraged to
+sacrifice carat in favor of a higher-quality cut. Whether this strategy
+helps these buyers stay within budget, however, demands consideration of
+diamond color and clarity.<br />     After cut, a diamond's color is the
+next metric of its quality. Colorless diamonds are the most prized and
+also the rarest, which makes them more expensive than diamonds with more
+color. As color is more noticeable in diamonds above one carat, the
+difference in price across color grades becomes much greater at higher
+carats. Prospective buyers considering smaller diamonds are therefore
+less likely to see dramatic differences in price across color grades.
+Instead, the prices of these diamonds are more strongly influenced by
+their cut and clarity. <br />     Clarity is the final metric of diamond
+quality included in this report, and is scaled according to the number
+and severity of the natural imperfections that occur in all gemstones.
+Diamonds with none or only microscopic surface flaws are incredibly
+rare, and can be among the most expensive diamonds on the market. Many
+imperfections are invisible to the naked eye, however, and can be hidden
+by a high-quality cut, particularly among smaller diamonds. As a result,
+clarity plays only a minor role in determining the price of most
+diamonds on the market, regardless of size. <br />     A diamond's
+carat, cut, color, and clarity are among the most important factors
+influencing price. Carat is the strongest determinant of price, with
+higher-carat diamonds becoming increasingly more expensive regardless of
+their cut, color, or clarity. Among diamonds of similar carat, however,
+cut plays a large role in dictating price. Diamonds of a high cut
+quality tend to have higher prices than those of lower quality cut
+grades such that opting for a lower-carat diamond in favor of a better
+cut may not necessarily reduce the price. Color and clarity are similar
+in that colorless and unblemished diamonds are more expensive than those
+of lower color and clarity grades for a given carat. However, this
+difference is minimal among most diamonds on the market due to their
+small size. These relationships between price and the carat, cut, color,
+and clarity of a diamond are important to consider when guiding
+prospective buyers towards a high-quality diamond within a particular
+budget. <br /> <br />
+
+### Section 2
+
+    Blue Nile's inventory features over 1,000 diamonds of varying
+quality as determined by the carat, cut, color, and clarity. These four
+qualities are among the most important determinants of a diamond's
+price. Using data on the Blue Nile inventory, we have investigated how
+specifically these metrics of diamond quality affect the price.
+
+#### Carat
+
+    A diamond's carat is a measure of its weight, with 1 carat
+corresponding to 200 mg. Blue Nile states that carat has the largest
+effect on price. As carat size increases, diamonds become more
+expensive. Indeed, the scatterplot of diamond carat versus price shows
+that diamond price increases exponentially with carat. This is due, in
+part, to the rarity of large diamond crystals: 95% of diamonds in the
+Blue Nile inventory are under 2.1 carats (see histogram below). However,
+the bigger is not always better: other characteristics such as cut,
+color, and clarity also affect a diamond's quality, and therefore its
+total price. <br />
+
+```{r echo=FALSE, out.width = "65%", fig.align = 'center', message=FALSE, warning=FALSE}
+# Creating a scatter plot of diamond carat vs price
+diamonds %>% 
+  ggplot(aes(x=carat, y=price/1000)) +
+  geom_point() +
+  labs(x='Diamond Carat',y='Price ($1K)', title='Scatterplot of Diamond Carat vs Price')
+```
+
+```{r echo=FALSE, out.width = "65%", fig.align = 'center', message=FALSE, warning=FALSE}
+# Histogram of the number of diamonds per each 0.25 carats 
+diamonds %>% 
+  ggplot(aes(x=carat)) + 
+  geom_histogram(aes(y=..count../sum(..count..)),binwidth = 0.25, fill = "cornflowerblue")+
+  labs(x='Diamond Carat',y='Count', title='Frequency of Diamond Carats')
+```
+
+<br />     To explore how other metrics of diamond quality are
+represented across carat, we plotted how diamonds of a similar carat are
+distributed across the different cut, color, and clarity grades. Blue
+Nile states that Astor Ideal is the best and most expensive diamond cut
+to purchase as it reflects the most light. The Astor Ideals are more
+commonly found at a smaller carat weight, with all the Astor Ideal
+diamonds in the inventory being less than 2 carats. There is little
+change in the distribution of diamonds across color grades with carat,
+which may be due to the fact that Blue Nile sells only high color
+quality diamonds. Diamond color grades span D through Z, but Blue Nile's
+inventory is limited to diamonds of the D-G (the highest quality) and
+H-J (very high quality) color grades. Diamond clarity is similar to cut
+as the highest clarity diamonds are limited to those of smaller carat
+weights. This presents an interesting point of tension, as inclusions
+become more visible in larger diamonds.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Histogram of the proportion of diamond cut per carat
+cut_per_carat <- diamonds %>% 
+  ggplot(aes(x=carat,fill=cut)) +
+  geom_histogram(position='fill',binwidth=0.25) +
+  labs(x='Diamond Carat', y='Proportion', title='Proportion of Diamond Cut per Carat', fill='Diamond Cut')+
+  theme(plot.title = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10),
+        legend.key.size = unit(0.25, 'cm'),
+        legend.key.height = unit(0.25, 'cm'), 
+        legend.key.width = unit(0.25, 'cm'), 
+        legend.title = element_text(size=8), 
+        legend.text = element_text(size=8))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Histogram of the proportion of diamond color per carat
+color_per_carat <- diamonds %>% 
+  ggplot(aes(x=carat,fill=color)) +
+  geom_histogram(position='fill',binwidth=0.25) +
+  labs(x='Diamond Carat', y='Proportion', title='Proportion of Diamond Color per Carat', fill='Diamond Color')+
+  theme(plot.title = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10),
+        legend.key.size = unit(0.25, 'cm'),
+        legend.key.height = unit(0.25, 'cm'), 
+        legend.key.width = unit(0.25, 'cm'), 
+        legend.title = element_text(size=8), 
+        legend.text = element_text(size=8))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Histogram of the proportion of diamond clarity per carat
+clarity_per_cut <- diamonds %>% 
+  ggplot(aes(x=carat,fill=clarity)) +
+  geom_histogram(position='fill',binwidth=0.25) +
+  labs(x='Diamond Carat', y='Proportion', title='Proportion of Diamond Clarity per Carat', fill='Diamond Clarity')+
+  theme(plot.title = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10),
+        legend.key.size = unit(0.25, 'cm'),
+        legend.key.height = unit(0.25, 'cm'), 
+        legend.key.width = unit(0.25, 'cm'), 
+        legend.title = element_text(size=8), 
+        legend.text = element_text(size=8))
+```
+
+```{r echo=FALSE, out.width = "110%", fig.align = 'center',message=FALSE, warning=FALSE}
+# All 3 histograms of proportion of cut, color and clarity per carat
+#cut_per_carat + color_per_carat + clarity_per_cut + plot_layout(ncol=2)
+#require(gridExtra)
+grid.arrange(cut_per_carat, color_per_carat, clarity_per_cut, ncol=2)
+```
+
+    Blue Nile recommends selecting a slightly smaller carat in favor of,
+spending more on a good cut, and using shape to mask deficiencies in
+color and clarity to purchase the best diamond possible for a given
+price. Whether these compromises actually reduce the total price of the
+diamond, however, remains to be verified.\
+<br / > <br / >
+
+#### Cut
+
+    A diamond's cut determines the amount of light that is reflected out
+of it, generating the eye-catching brilliance, fire, and sparkle that
+contribute to a diamond's overall beauty. Although most of the public
+considers carat the primary factor dictating a diamond's price, Blue
+Nile asserts that the cut of a diamond can have the strongest influence.
+Prospective buyers are also encouraged to prioritize a superior cut over
+a higher carat diamond when shopping within a budget. <br />     There
+are six grades of diamond cuts, listed below in descending order of
+quality as measured by the amount of light that the diamond reflects:
+Astor by Blue Nile™ or Ideal (the top \~3% of diamond cut quality), Very
+Good (the top \~15% of diamond cut quality), Good (the top \~25% of
+diamond cut quality), Fair, and Poor. All Blue Nile diamonds are graded
+by the Gemological Institute of America (GIA), and those of the Astor by
+Blue Nile™ cut grade are additionally certified for light performance by
+GemEx®. The latter two grades (Fair and Poor) are not sold by Blue Nile,
+and so are excluded from this report. <br />     The majority of
+diamonds in the Blue Nile inventory are Ideal or Very Good cut grades,
+representing 60.87% and 31.47% of diamonds, respectively. The highest
+quality diamonds, Astor by Blue Nile™, represent only 1.65% of diamonds
+in stock. <br />     
+
+```{r A, out.width = "65%", fig.align = 'center', echo = FALSE, message=FALSE, warning=FALSE}
+freq_data <- diamonds %>%
+  group_by(cut) %>%
+  summarise(Count = n()) %>%
+  mutate(Prop = Count/nrow(diamonds))
+
+ggplot(freq_data, aes(x = cut, y = Prop)) +
+  geom_bar(stat = "identity", fill = "cornflowerblue") +
+  labs(x = "Diamond Cut Grade",  y = "Proportion of Inventory",  
+       title = "Distribution of Blue Nile diamonds across cut grades")
+```
+
+    The price of a Blue Nile diamond varies widely within each cut
+grade, such that it is difficult to glean meaningful insights when all
+of the data is plotted on the same set of axes (see below): <br />
+
+```{r B, out.width = "65%", fig.align = 'center', echo = FALSE, message=FALSE, warning=FALSE}
+ggplot(diamonds, aes(x = cut, y = price/1000)) + 
+  geom_violin() + geom_boxplot(width = 0.1, fill = "cornflowerblue") + ylim(0,375) +
+  labs(x = "Diamond Cut Grade",  y = "Price ($1k)",  
+       title = "Diamond price by cut")
+```
+
+    To more effectively visualize the relationship between a diamond's
+price and cut, diamonds with prices above \$10.6k (outliers in this data
+set by IQR, $n = 143$) will be graphed separately. The broad trends
+observed in these graphs are generally consistent between non-outliers
+and outliers, however, so they will be discussed as one. For all
+figures, diamonds with prices $< \$10,600$ are graphed on the left, and
+diamonds with prices $\geq \$10,600$ are graphed on the right.<br />
+    A combination boxplot and violin plot were used to gain a general
+knowledge of diamond prices within and between each cut grade. As
+expected, diamonds of the Astor by Blue Nile™ cut grade have a higher
+median price compared to the other cut grades in the Blue Nile
+inventory. The prices of these high-cut quality diamonds are also evenly
+distributed across its range. Diamonds of the Ideal and Very Good cut
+grades, however, are less consistent in their prices. The highest prices
+in these intermediate cut grades exceed that of the most expensive Astor
+by Blue Nile™ diamond, but most diamonds in these cut grades are priced
+at or below the median value. No diamonds of the Good cut grade quite
+reach these extreme values, but they also exhibit an appreciable range
+of prices. It is interesting to note that the median price increases
+with lower-quality cut grades (excluding Astor by Blue Nile™), despite
+Blue Nile's claims that cut is a major determinant of price.<br />
+
+```{r C, out.width = "75%", fig.align = 'center', fig.width=12,echo = FALSE, message=FALSE, warning=FALSE}
+# 4646 + 1.5(4646 - 723) = 10530.5; rounded up to 10,600
+less_106 <- subset(diamonds, price < 10600)
+geq_106 <- subset(diamonds, price >= 10600)
+box_v_less <- ggplot(less_106, aes(x = cut, y = price/1000)) + 
+  geom_violin() + geom_boxplot(width = 0.05, fill = "cornflowerblue") + 
+  labs(x = "Diamond Cut Grade",  y = "Price ($1k)",  
+       title = "Price by cut")
+
+box_v_more <- ggplot(geq_106, aes(x = cut, y = price/1000)) + 
+  geom_violin() + geom_boxplot(width = 0.05, fill = "cornflowerblue") + 
+  labs(x = "Diamond Cut Grade",  y = "Price ($1k)",  
+       title = "")
+
+grid.arrange(box_v_less, box_v_more, nrow = 1)
+```
+
+<br />     Cut grade is not the sole determinant of a diamond's price:
+carat is often viewed as the primary factor influencing price. The
+scatterplots below show the relationship between price and carat, while
+distinguishing between the different cut grades. A diamond's price
+increases with carat, and larger carat diamonds are increasingly more
+expensive. This trend holds regardless of the diamond's cut, and
+complies with the claims made by Blue Nile on their website. For a given
+carat, diamonds of a higher grade cut also tend to be more expensive, in
+agreement with Blue Nile's assertion that cut is a key determinant of a
+diamond's price. This trend appears to be exaggerated for higher carat
+diamonds, albeit imperfectly. <br />
+
+```{r E, echo = FALSE, fig.align = 'center',fig.width=9.5, message=FALSE, warning=FALSE}
+scat_less <- ggplot(less_106, aes(x = carat, y = price/1000, color = cut)) + 
+  geom_point(alpha = 0.6, size = 3) + 
+  scale_color_manual(values = c("blue","gold", "violet", "cornflowerblue"), guide = "none") +
+  labs(x = "Diamond Carat",  y = "Price ($1k)",  
+       title = "Price by carat and cut")
+
+scat_more <- ggplot(geq_106, aes(x = carat, y = price/1000, color = cut)) + 
+  geom_point(alpha = 0.6, size = 3) +
+  scale_color_manual(name = "Cut Grade", values = c("blue","gold", "violet", "cornflowerblue")) +
+  labs(x = "Diamond Carat",  y = "Price ($1k)", title = "") +
+  theme(legend.key.size = unit(0.35, 'cm'), #change legend key size
+        legend.title = element_text(size=10), #change legend title font size
+        legend.text = element_text(size=8))
+
+grid.arrange(scat_less, scat_more, nrow = 1, widths = c(1.5,2))
+```
+
+<br />     Deviations from the general trends outlined above may be
+explained by other factors contributing to a diamond's overall value,
+namely their color and clarity. While these attributes are discussed in
+greater depth below, here we examine how these attributes are
+distributed within each cut grade.<br />     Diamonds of the
+highest-quality color grades (G and above) appear approximately evenly
+represented among Ideal and Very Good cut grade diamonds. Astor by Blue
+Nile™ diamonds are most frequently in the F color grade, but this skew
+may be a by-product of a lower sample size ($n = 20$). Similarly, an
+unexpectedly high proportion of Good cut grade diamonds have the highest
+color ranking, but this may be due to the lower sample size ($n = 73$).
+<br />     The highest clarity diamonds are extremely rare such that
+they make up only a small proportion of the diamonds in each cut grade,
+including Astor by Blue Nile™. Of the clarity grades that are in the
+Blue Nile inventory, the proportional representation of the higher
+clarity grades generally declines with the cut grade as the distribution
+of clarity grades shifts somewhat towards lower grades. <br />
+
+```{r F, fig.align = 'center',fig.width=9.5, message=FALSE, warning=FALSE, echo = FALSE}
+new_data2 <- as.data.frame(prop.table(table(diamonds$color, diamonds$cut), 2))
+new_data2 <- rename(new_data2, color = Var1, cut = Var2)
+col_gr <- ggplot(new_data2, aes(x = cut, y = Freq, fill = color)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_brewer(palette = "Set1", name = "Color") +
+  labs(x = "Diamond Cut",  y = "Proportion",  title = "Diamond Color by Cut") +
+  theme(legend.key.size = unit(0.35, 'cm'), #change legend key size
+        legend.title = element_text(size=10), #change legend title font size
+        legend.text = element_text(size=8),
+        axis.text.x = element_text(angle = 45, vjust = 0.75, hjust = 0.75))
+
+new_data1 <- as.data.frame(prop.table(table(diamonds$clarity, diamonds$cut), 2))
+new_data1 <- rename(new_data1, clarity = Var1, cut = Var2)
+clar <- ggplot(new_data1, aes(x = cut, y = Freq, fill = clarity)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_brewer(palette = "Set1", name = "Clarity") +
+  labs(x = "Diamond Cut",  y = "Proportion",  title = "Diamond Clarity by Cut") +
+  theme(legend.key.size = unit(0.35, 'cm'), #change legend key size
+        legend.title = element_text(size=10), #change legend title font size
+        legend.text = element_text(size=8),
+        axis.text.x = element_text(angle = 45, vjust = 0.75, hjust = 0.75))
+
+grid.arrange(col_gr, clar, nrow = 1)
+```
+
+<br /> <br />
+
+#### Color
+
+<br />     Blue Nile claims the diamond's color is the second most
+important factor, with the ideal diamond being nearly colorless. Lesser
+color is associated with a higher grade (assigned a letter D-Z). Diamond
+prices increase with an alphabetical order. Finding a diamond without
+any color (aka a D-F grade) is incredibly rare, presumably making it
+pricier. In contrast, near-colorless diamonds receive a grade between
+G-H or I-J. Lastly, faintly colored diamonds would receive a K, which
+would be the least expensive grade. Blue Nile does not produce diamonds
+past a K grade as per their quality standards. <br />     Given that
+color is a categorical variable, we will be visualizing the relationship
+between price and color using boxplots in order to see the range of
+prices by color. Price is also enumerated by the \$1000's for easier
+readability.<br />
+
+```{r, echo = FALSE,out.width = "65%", fig.align = 'center', message=FALSE, warning=FALSE}
+ggplot(diamonds, aes(x=color, y=price/1000, fill='yellow')) + 
+    geom_boxplot() +
+    theme(legend.position="none",plot.title = element_text(hjust = 0.5)) +
+    labs(x="Color", y="Price (in $1000's)",
+    title="Color over Price of Diamond")
+
+```
+
+    The large quantity of outliers makes it difficult to see the
+boxplots themselves, but the extreme range of outliers is informative
+itself, with the maximum values decreasing steadily going down the
+alphabet. This is consistent with Blue Nile's claim that lesser
+color+higher grades are associated with higher prices, and lower grades
+being cheaper. <br / >     Beyond the simple relationship between color
+and price, Blue Nile also claims that color is more visible in larger
+diamonds. Therefore, they claim color matters more when going over 1
+carat whereas diamonds under 1 carat are more acceptable for an I-K
+grade. To take this relationship into account, we can also visualize the
+relationship between all three by creating a scatter plot of carat vs.
+price and coloring each point by its diamond color. <br />
+
+```{r, echo = FALSE,out.width = "65%", fig.align = 'center', message=FALSE, warning=FALSE}
+diamonds %>%
+    ggplot(aes(x=carat, y=price/1000, col=color)) + 
+    geom_point(aes(size=carat),shape=18,alpha=0.5) + 
+    theme(plot.title = element_text(hjust = 0.5)) +
+    labs(x="Carat", y="Price (in $1000's)",
+    title="Carat + Color over Price of Diamond")
+```
+
+    When looking at this scatter plot, the carat and color become more
+and more distinguished as the carat increases. The colors themselves
+also begin to form a trend, with higher grade colors being pricier than
+lower grade colors. At the lower end of carat ($>2$), the color grades
+become less distinguishable, which is also in line with Blue Nile's
+claim that color is a less important characteristic when going under $1$
+carat. <br /> <br />
+
+#### Clarity
+
+<br />     Diamonds are made underground through enormous pressure and
+heat, which means that natural surface flaws are unavoidable. Diamond
+clarity is the assessment of small imperfections on the surface and
+within the stone. The flaws on the surface of a diamond are called
+blemishes; these do not affect the appearance of the diamonds to the
+naked eye. These flaws are also considered as "internal characteristics"
+since they give the diamond its own character and uniqueness. <br />
+    Diamond clarity spans 6 categories with a total of 11 clarity
+grades. The lowest grades are I1, I2, and I3, which are the Included
+Diamonds--these have visible imperfections likely to affect the beauty
+of the diamond. Next there are the SI1, and SI2, the Slightly Included
+diamonds, where the inclusions are noticeable at 10x magnification only.
+The Very Slightly Included diamonds have minor inclusions either
+difficult (VS1) or somewhat easy (VS2) to see at 10x magnification.
+These are the most popular ones at Blue Nile, according to the website.
+VVS1 and VVS2 represent the Very Very Slightly Included category of the
+diamond clarity grade, where even the trained eye cannot spot the
+imperfections under 10x magnification. IF stands for the Internally
+Flawless diamonds which can have some small surface blemishes visible
+under a microscope. And the highest grade for diamond clarity is the
+Flawless diamonds (F), which has no internal or external
+characteristics. The latter is extremely rare, and can occur with only
+1% of the diamonds. <br />      The Blue Nile claims that although
+clarity impacts the appearance of a diamond, a high clarity grade does
+not guarantee more sparkle or avoidance of imperfections. They suggest
+selecting a diamond with inclusions that can't be seen through the crown
+without magnification as opposed to choosing one with the highest
+clarity grade. The majority of diamond clarity levels in the Blue Nile
+diamonds dataset are identified as "Very Slightly Included" or "Slightly
+Included", making up about 70% of the entire dataset. Furthermore, the
+Included clarity level diamonds are not a part of this dataset.<br />
+
+```{r, echo = FALSE,out.width = "65%", fig.align = 'center', message=FALSE, warning=FALSE}
+freq_clarity <- diamonds %>%
+  group_by(clarity) %>%
+  summarise(Count = n()) %>%
+  mutate(Proportions = Count/nrow(diamonds))
+
+ggplot(freq_clarity, aes(x = clarity, y = Proportions)) +
+  geom_bar(stat = "identity", fill = "skyblue3") +
+  labs(x = "Diamond Cut Grade",  y = "Proportion of Inventory",  
+       title = "Distribution of Blue Nile diamonds across cut grades")
+```
+
+<br />     Generally, diamonds with the fewest and smallest blemishes
+are priced higher, as we can see in the graph below.
+
+```{r, echo = FALSE,out.width = "65%", fig.align = 'center', message=FALSE, warning=FALSE}
+ggplot(diamonds, aes(x = clarity, y = price/1000)) + 
+  geom_boxplot() + geom_boxplot() + 
+  labs(x = "Diamond Clarity Level",  y = "Price ($1k)",  
+       title = "Price by Clarity")
+```
+
+<br /> However, if we take a look at the datapoints of only flawless
+diamonds, which is the highest grade for clarity, we will see that the
+clarity level does not necessarily impact the price as much as the other
+characteristics of a diamond.<br />
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+flawless <- subset(diamonds, clarity == "FL")
+flawless
+```
+
+<br /> <br /> <br />
+
+### Section 3
+
+<br />     A simple linear regression model of diamond price against
+carat was fit using the Blue Nile inventory data. Plotting diamond carat
+versus price, there looks to be an exponential relationship between the
+two variables. This violates the first assumption of simple linear
+regression, which is that there is a linear relationship between the two
+variables. Furthermore, a regression plot reveals that the variance in
+the residuals increases and is not equally distributed around zero,
+violating another assumption of simple linear regression. The residuals
+of the model appear to be independent of one another according to an ACF
+plot, but a QQ plot indicates that they do not follow a normal
+distribution.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Linear regression on original data of carat vs price
+results <- lm(price~carat, data=diamonds)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+#Scatter plot of diamond carat vs price with linear regression line
+plot_1 <- diamonds %>% 
+  ggplot(aes(x=carat, y=price/1000)) +
+  geom_point()+
+  geom_smooth(method = "lm", se=FALSE)+
+  labs(x='Diamond Carat',y='Price ($1K)', title='Scatterplot of Diamond Carat vs Price')+
+  theme(plot.title = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Residual plot for original data 
+res_plot_1 <- diamonds %>% 
+  ggplot(aes(x=carat, y=price)) +
+  geom_point()+
+  geom_hline(yintercept=0, color="red")+
+  labs(x="Fitted y", y="Residuals", title="Residual Plot")+
+  theme(plot.title = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# ACF plot of original data 
+acf_1 <- acf(results$residuals, plot=FALSE)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# QQ plot using ggplot for original data 
+qq_1 <- diamonds %>% 
+  ggplot(aes(sample=results$residuals)) +
+  stat_qq() +
+  stat_qq_line(color='red') +
+  labs(x='Theoretical Quantiles', y='Sample Quantiles', title='Normal Q-Q Plot') +
+  theme(plot.title = element_text(hjust = 0.5, size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10)) 
+```
+
+```{r echo=FALSE, fig.width=9.5,fig.align = 'center',message=FALSE, warning=FALSE}
+# Combining scatter plot, residual plot, qq plot and acf plot of original data together 
+grid.arrange(plot_1,res_plot_1,qq_1,ncol=3)
+#plot_1 + res_plot_1 + qq_1 + plot_layout(ncol=2, heights = c(4,6)) + 
+ # ~plot(acf_1, main=NA, xlab=NA, ylab=NA)+title(main = list("ACF Plot", cex = 0.75),xlab = list("LAG", cex = 0.75), ylab = list("ACF", cex = 0.75))
+
+```
+
+<br />     To address the violations of the assumptions for simple
+linear regression discussed above, the data will be transformed. The
+response variable will be transformed to help stabilize the variance and
+may address the non-linearity of the data. . If the resulting model
+fails to meet the assumptions of simple linear regression, then the
+predictor variable will also be transformed. <br />     A Box-Cox plot
+helps to identify the appropriate transformation of the response
+variable. Since the 95% interval is centered close to zero, a log
+transformation of the response variable, price, is appropriate. This
+also preserves the interpretability of the model coefficients. <br />
+    
+
+```{r, echo = FALSE,out.width = "65%", fig.align = 'center', message=FALSE, warning=FALSE}
+# Box Cox of original data to determine lambda
+boxcox(results, lambda = seq(-1,1,0.5))
+```
+
+<br />     After the log transformation on the response variable, the
+variance among the residuals is more consistent, and the values are more
+evenly distributed around zero. However, as both the scatterplot and the
+residual plot show a nonlinear relationship, the assumptions of simple
+linear regression are still not being met.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Log Transformation of y into ystar and adding to data frame
+ystar<-log(diamonds$price)
+
+diamonds<-data.frame(diamonds,ystar)
+```
+
+```{r echo=FALSE,  fig.align = 'center', message=FALSE, warning=FALSE}
+# Scatter plot of diamond carat vs transformed y (ystar)
+plot_2 <- diamonds %>% 
+  ggplot(aes(x=carat, y=ystar)) +
+  geom_point()+
+  geom_smooth(method = "lm", se=FALSE)+
+  labs(x='Diamond Carat',y='Price (ystar)', title='Diamond Carat vs Price (ystar)')+
+  theme(plot.title = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Linear regression on ystar and adding residuals to data frame
+result.ystar<-lm(ystar~carat, data=diamonds)
+yhat2<-result.ystar$fitted.values
+res2<-result.ystar$residuals
+diamonds<-data.frame(diamonds,yhat2,res2)
+```
+
+```{r echo=FALSE, fig.align = 'center', message=FALSE, warning=FALSE}
+# Residual plot of ystar data
+res_plot_2 <- diamonds %>% 
+  ggplot(aes(x=yhat2, y=res2)) +
+  geom_point()+
+  geom_hline(yintercept=0, color="red")+
+  labs(x="fitted y", y="Residuals", title="Residual Plot with ystar")+
+  theme(plot.title = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10))
+```
+
+```{r echo=FALSE, fig.align = 'center', message=FALSE, warning=FALSE}
+# Combining scatter plot and residual plot after transformation on y
+grid.arrange(plot_2, res_plot_2, ncol = 2)
+```
+
+<br />     A log transformation of the predictor variable, carat, will
+be performed in order to fix the nonlinear relationship <br />
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Log transformation on x and adding xstar to data frame
+xstar<-log(diamonds$carat)
+
+diamonds<-data.frame(diamonds,xstar)
+```
+
+```{r echo=FALSE,  fig.align = 'center', message=FALSE, warning=FALSE}
+# Scatter plot of xstar vs ystar
+plot_3 <- diamonds %>% 
+  ggplot(aes(x=xstar, y=ystar)) +
+  geom_point() +
+  geom_smooth(method = "lm", se=FALSE)+
+  labs(x='Diamond Carat (xstar)',y='Price (ystar)', title='Diamond Carat(xstar) vs Price(ystar)') +
+  theme(plot.title = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Linear Regression model on xstar and ystar and then adding residuals to data frame
+results.xstar<-lm(ystar~xstar, data=diamonds)
+
+yhat3<-results.xstar$fitted.values
+res3<-results.xstar$residuals
+
+diamonds<-data.frame(diamonds,yhat3,res3)
+```
+
+```{r echo=FALSE,  fig.align = 'center', message=FALSE, warning=FALSE}
+# Residual plot of xstar and ystar data
+res_plot_3 <- diamonds %>% 
+  ggplot(aes(x=yhat3,y=res3))+
+  geom_point()+
+  geom_hline(yintercept=0, color="red")+
+  labs(x="Fitted y", y="Residuals", title="Residual Plot with xstar and ystar")+
+  theme(plot.title = element_text(size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10))
+```
+
+```{r echo=FALSE, fig.align = 'center', out.width = "65%", message=FALSE, warning=FALSE}
+# ACF plot of residuals after transformations
+#acf(res3)
+AutoCorrelation <- acf(res3, plot = FALSE)
+plot(AutoCorrelation, main = "ACF Plot of Residuals After Transformations")
+```
+
+```{r, echo=FALSE, fig.align = 'center', fig.width=9.5, message=FALSE, warning=FALSE}
+grid.arrange(plot_3, res_plot_3,ncol=2)
+```
+
+```{r echo=FALSE, fig.align = 'center', out.width = "65%", message=FALSE, warning=FALSE}
+# QQ plot using ggplot for xstar and ystar
+qq_2 <- diamonds %>% 
+  ggplot(aes(sample=results.xstar$residuals)) +
+  stat_qq() +
+  stat_qq_line(color='red') +
+  labs(x='Theoretical Quantiles', y='Sample Quantiles', title='Normal Q-Q Plot with xstar and ystar') +
+  theme(plot.title = element_text(hjust = 0.5, size=10),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10)) 
+qq_2
+```
+
+<br />     After performing a log transformation on both the response
+and predictor variables, all assumptions of simple linear regression
+have been met: there is a linear relationship between the response and
+predictor, the variance among the residuals is constant and centered
+around zero, the residuals are independent and follow a normal
+distribution. Thus, we may now use the estimated regression equation to
+draw conclusions about the impact of carat weight on diamond price.
+<br /> <br />     The estimated linear regression equation is:
+$$y = 8.512 + 1.944x.$$ Here, $y$ is the natural log-transformed price
+and $x$ is the natural log-transformed carat. Thus for every one
+percent, or one point, increase in diamond carat, there is a 1.944%
+increase in the price. This agrees with the original scatterplot, which
+indicates that bigger diamonds are exponentially more expensive than
+smaller diamonds. Based on this analysis, Blue Nile's suggestion to buy
+a slightly smaller diamond when operating on a budget is an effective
+strategy. According to the $R^2$, this linear model explains 95.47% of
+the variance in the price of Blue Nile diamonds, which lends support to
+the assertion that carat is the foremost determinant of a diamond's
+price.
